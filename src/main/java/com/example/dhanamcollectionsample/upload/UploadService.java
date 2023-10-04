@@ -1,5 +1,7 @@
 package com.example.dhanamcollectionsample.upload;
 
+import java.util.Optional;
+
 import org.apache.poi.xssf.usermodel.XSSFRow;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
@@ -9,6 +11,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.example.dhanamcollectionsample.group.GroupRepository;
 import com.example.dhanamcollectionsample.group.GroupService;
 import com.example.dhanamcollectionsample.group.entity.Group;
 import com.example.dhanamcollectionsample.prospect.ProspectService;
@@ -20,42 +23,52 @@ public class UploadService {
     private GroupService groupService;
     @Autowired
     private ProspectService prospectService;
+    @Autowired
+    private GroupRepository groupRepository;
 
     public ResponseEntity<Object> uploadCollections(MultipartFile multipartFile) {
         try {
             XSSFWorkbook workbook = new XSSFWorkbook(multipartFile.getInputStream());
             XSSFSheet worksheet = workbook.getSheet("Sheet1");
-            XSSFRow row = worksheet.getRow(1);
 
-            // creating new group
-            Group group = new Group();
-            group.setGroupId((String) row.getCell(2).getStringCellValue());
-            group.setGroupName((String) row.getCell(3).getStringCellValue());
-            group.setCentreId((String) row.getCell(9).getStringCellValue());
-            group.setLocaleName((String) row.getCell(10).getStringCellValue());
-            group.setLocalId((String) row.getCell(11).getStringCellValue());
-            group.setCentreName((String) row.getCell(23).getStringCellValue());
-            group.setEmiStatus((String) (row.getCell(26).getStringCellValue()).toLowerCase());
-            Group newGroup = groupService.create(group);
+            for (var i = 1; i < worksheet.getPhysicalNumberOfRows(); i++) {
+                XSSFRow row = worksheet.getRow(i);
 
-            // creating new prospect
-            Prospect prospect = new Prospect();
-            String groupHead = row.getCell(12).getStringCellValue();
-            prospect.setGrpHead((boolean) Boolean.parseBoolean(groupHead));
+                String groupId = (String) row.getCell(2).getStringCellValue();
+                Optional<Group> optionalGroup = groupRepository.findByGroupId(groupId);
 
-            prospect.setProspectId((String) row.getCell(0).getStringCellValue());
-            prospect.setProspectName((String) row.getCell(1).getStringCellValue());
-            prospect.setProspectMobile((Long) Math.round(row.getCell(5).getNumericCellValue()));
-            prospect.setCifId((Long) Math.round(row.getCell(6).getNumericCellValue()));
+                Group group;
+                if (optionalGroup.isPresent()) {
+                    group = optionalGroup.get();
+                } else {
+                    // creating new group
+                    Group newGroup = new Group();
+                    newGroup.setGroupId((String) row.getCell(2).getStringCellValue());
+                    newGroup.setGroupName((String) row.getCell(3).getStringCellValue());
+                    newGroup.setCentreId((String) row.getCell(9).getStringCellValue());
+                    newGroup.setLocaleName((String) row.getCell(10).getStringCellValue());
+                    newGroup.setLocalId((String) row.getCell(11).getStringCellValue());
+                    newGroup.setCentreName((String) row.getCell(23).getStringCellValue());
+                    newGroup.setEmiStatus((String) (row.getCell(26).getStringCellValue()).toLowerCase());
+                    group = groupService.create(newGroup);
+                }
 
-            Prospect newProspect = prospectService.create(prospect);
+                // creating new prospect
+                Prospect newProspect = new Prospect();
+                String groupHead = row.getCell(12).getStringCellValue();
+                newProspect.setGrpHead((boolean) Boolean.parseBoolean(groupHead));
+
+                newProspect.setProspectId((String) row.getCell(0).getStringCellValue());
+                newProspect.setProspectName((String) row.getCell(1).getStringCellValue());
+                newProspect.setProspectMobile((Long) Math.round(row.getCell(5).getNumericCellValue()));
+                newProspect.setCifId((Long) Math.round(row.getCell(6).getNumericCellValue()));
+                Prospect prospect = prospectService.create(newProspect);
+
+                // mapping prospect to group
+                prospectService.mappingToGroup(group, prospect);
+            }
             workbook.close();
-
-            // mapping prospect to group
-            prospectService.mappingToGroup(newGroup, newProspect);
-
             return ResponseEntity.status(HttpStatus.OK).body("Collection data uploaded successfully.");
-
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error:" + e.getMessage());
         }
