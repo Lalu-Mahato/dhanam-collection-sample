@@ -14,6 +14,8 @@ import org.springframework.web.multipart.MultipartFile;
 import com.example.dhanamcollectionsample.group.GroupRepository;
 import com.example.dhanamcollectionsample.group.GroupService;
 import com.example.dhanamcollectionsample.group.entity.Group;
+import com.example.dhanamcollectionsample.loan.LoanService;
+import com.example.dhanamcollectionsample.loan.entity.Loan;
 import com.example.dhanamcollectionsample.prospect.ProspectService;
 import com.example.dhanamcollectionsample.prospect.entity.Prospect;
 
@@ -23,6 +25,8 @@ public class UploadService {
     private GroupService groupService;
     @Autowired
     private ProspectService prospectService;
+    @Autowired
+    private LoanService loanService;
     @Autowired
     private GroupRepository groupRepository;
 
@@ -64,8 +68,22 @@ public class UploadService {
                 newProspect.setCifId((Long) Math.round(row.getCell(6).getNumericCellValue()));
                 Prospect prospect = prospectService.create(newProspect);
 
+                // creating new loan
+                Loan newLoan = new Loan();
+                newLoan.setProductType((String) row.getCell(4).getStringCellValue());
+                newLoan.setLoanId((String) row.getCell(8).getStringCellValue());
+                newLoan.setLoanAccNumber((Long) Math.round(row.getCell(7).getNumericCellValue()));
+                newLoan.setLoanAmount((double) Math.round(row.getCell(13).getNumericCellValue()));
+                newLoan.setDpd((double) Math.round(row.getCell(15).getNumericCellValue()));
+                newLoan.setDpdAmount((double) Math.round(row.getCell(16).getNumericCellValue()));
+                newLoan.setOsBalance((double) Math.round(row.getCell(17).getNumericCellValue()));
+                Loan loan = loanService.create(newLoan);
+
                 // mapping prospect to group
                 prospectService.mappingToGroup(group, prospect);
+
+                // mapping loan to prospect
+                loanService.mappingToProspect(loan, prospect);
             }
             workbook.close();
             return ResponseEntity.status(HttpStatus.OK).body("Collection data uploaded successfully.");

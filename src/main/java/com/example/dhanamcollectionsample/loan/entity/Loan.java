@@ -1,11 +1,8 @@
-package com.example.dhanamcollectionsample.prospect.entity;
+package com.example.dhanamcollectionsample.loan.entity;
 
-import java.util.ArrayList;
 import java.util.Date;
-import java.util.List;
 
-import com.example.dhanamcollectionsample.group.entity.Group;
-import com.example.dhanamcollectionsample.loan.entity.Loan;
+import com.example.dhanamcollectionsample.prospect.entity.Prospect;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 import jakarta.persistence.Column;
@@ -15,7 +12,6 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
-import jakarta.persistence.OneToMany;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
@@ -29,18 +25,21 @@ import lombok.NoArgsConstructor;
 @Entity
 @NoArgsConstructor
 @AllArgsConstructor
-@Table(name = "prospects")
-public class Prospect {
+@Table(name = "loans")
+public class Loan {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
-    private String prospectName;
-    private String prospectId;
-    private Long prospectMobile;
-    private Boolean grpHead;
-    private Long prospectAltMobile;
-    private String prospectAddress;
-    private long cifId;
+    private String loanId;
+    private long loanAccNumber;
+    private Double loanAmount;
+    private Double dpd;
+    private Double dpdAmount;
+    private Double osBalance;
+    private String productType;
+    private Integer tenure = 24;
+    private Date loanStartDate;
+    private Date loanEndDate;
 
     @Temporal(TemporalType.TIMESTAMP)
     @Column(name = "created_at")
@@ -60,12 +59,8 @@ public class Prospect {
         updatedAt = new Date();
     }
 
-    @JsonIgnoreProperties(value = "prospects")
+    @JsonIgnoreProperties(value = "loans")
     @ManyToOne
-    @JoinColumn(name = "groupId")
-    private Group group;
-
-    @JsonIgnoreProperties(value = "prospect")
-    @OneToMany(mappedBy = "prospect")
-    private List<Loan> loans = new ArrayList<>();
+    @JoinColumn(name = "prospectId")
+    private Prospect prospect;
 }
