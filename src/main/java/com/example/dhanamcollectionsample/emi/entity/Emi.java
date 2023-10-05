@@ -1,11 +1,8 @@
-package com.example.dhanamcollectionsample.loan.entity;
+package com.example.dhanamcollectionsample.emi.entity;
 
-import java.util.ArrayList;
 import java.util.Date;
-import java.util.List;
 
-import com.example.dhanamcollectionsample.emi.entity.Emi;
-import com.example.dhanamcollectionsample.prospect.entity.Prospect;
+import com.example.dhanamcollectionsample.loan.entity.Loan;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 import jakarta.persistence.Column;
@@ -15,7 +12,6 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
-import jakarta.persistence.OneToMany;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
@@ -29,21 +25,16 @@ import lombok.NoArgsConstructor;
 @Entity
 @NoArgsConstructor
 @AllArgsConstructor
-@Table(name = "loans")
-public class Loan {
+@Table(name = "emis")
+public class Emi {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
-    private String loanId;
-    private long loanAccNumber;
-    private Double loanAmount;
-    private Double dpd;
-    private Double dpdAmount;
-    private Double osBalance;
-    private String productType;
-    private Integer tenure = 24;
-    private Date loanStartDate;
-    private Date loanEndDate;
+    private Double emiAmount;
+    private String emiStatus;
+    private Double emiCollected;
+    private Double intEmiAmount;
+    private Date emiDueDate;
 
     @Temporal(TemporalType.TIMESTAMP)
     @Column(name = "created_at")
@@ -63,12 +54,8 @@ public class Loan {
         updatedAt = new Date();
     }
 
-    @JsonIgnoreProperties(value = "loans")
+    @JsonIgnoreProperties(value = "emis")
     @ManyToOne
-    @JoinColumn(name = "prospectId")
-    private Prospect prospect;
-
-    @JsonIgnoreProperties(value = "loan")
-    @OneToMany(mappedBy = "loan")
-    private List<Emi> emis = new ArrayList<>();
+    @JoinColumn(name = "loanId")
+    private Loan loan;
 }

@@ -1,5 +1,6 @@
 package com.example.dhanamcollectionsample.upload;
 
+import java.util.Date;
 import java.util.Optional;
 
 import org.apache.poi.xssf.usermodel.XSSFRow;
@@ -11,6 +12,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.example.dhanamcollectionsample.emi.EmiService;
+import com.example.dhanamcollectionsample.emi.entity.Emi;
 import com.example.dhanamcollectionsample.group.GroupRepository;
 import com.example.dhanamcollectionsample.group.GroupService;
 import com.example.dhanamcollectionsample.group.entity.Group;
@@ -29,6 +32,8 @@ public class UploadService {
     private LoanService loanService;
     @Autowired
     private GroupRepository groupRepository;
+    @Autowired
+    private EmiService emiService;
 
     public ResponseEntity<Object> uploadCollections(MultipartFile multipartFile) {
         try {
@@ -79,11 +84,23 @@ public class UploadService {
                 newLoan.setOsBalance((double) Math.round(row.getCell(17).getNumericCellValue()));
                 Loan loan = loanService.create(newLoan);
 
+                // creating new emi
+                Emi newEmi = new Emi();
+                newEmi.setEmiAmount((double) Math.round(row.getCell(14).getNumericCellValue()));
+                newEmi.setIntEmiAmount((double) Math.round(row.getCell(14).getNumericCellValue()));
+                newEmi.setEmiStatus((String) (row.getCell(26).getStringCellValue()).toLowerCase());
+                newEmi.setEmiCollected((double) Math.round(row.getCell(27).getNumericCellValue()));
+                newEmi.setEmiDueDate((Date) row.getCell(18).getDateCellValue());
+                Emi emi = emiService.create(newEmi);
+
                 // mapping prospect to group
                 prospectService.mappingToGroup(group, prospect);
 
                 // mapping loan to prospect
                 loanService.mappingToProspect(loan, prospect);
+
+                // mapping emi to loan
+                emiService.mappingToLoan(emi, loan);
             }
             workbook.close();
             return ResponseEntity.status(HttpStatus.OK).body("Collection data uploaded successfully.");
