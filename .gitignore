@@ -26,4 +26,5 @@ replay_pid*
 application.properties
 target/maven-status/**
 .vscode/**
+sample.xlsx
 
